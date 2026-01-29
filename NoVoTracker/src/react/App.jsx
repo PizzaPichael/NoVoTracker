@@ -74,9 +74,13 @@ const theme = createTheme({
   },
 });
 
-const container = document.getElementById('app');
+const container = document.getElementById('root');
 const root = createRoot(container);
-root.render(<AppBarProvider></AppBarProvider>);
+root.render(
+<AppBarProvider>
+  <AppLayout />
+</AppBarProvider>
+);
 
 // register the Workbox‐generated service worker.
 // It tells the client to install the service worker which is needed for PWA functionality.
