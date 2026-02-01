@@ -31,7 +31,7 @@ const theme = createTheme({
           height: '100%',
           background: '#FFFFFF',
         },
-        '#app': {
+        '#root': {
           width: '100%',
           height: '100%',
         },
@@ -75,12 +75,19 @@ const theme = createTheme({
 });
 
 const container = document.getElementById('root');
-const root = createRoot(container);
-root.render(
-<AppBarProvider>
-  <AppLayout />
-</AppBarProvider>
-);
+if (container) {
+  const root = createRoot(container);
+  root.render(
+    <AppBarProvider>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <Router>
+          <AppLayout />
+        </Router>
+      </ThemeProvider>
+    </AppBarProvider>
+  );
+}
 
 // register the Workbox‐generated service worker.
 // It tells the client to install the service worker which is needed for PWA functionality.
