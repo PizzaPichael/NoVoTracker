@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState } from 'react';
 import PropTypes from 'prop-types';
 
-import { ArrowBack } from '@mui/icons-material';
+import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
 
 const AppBarContext = createContext();
 
@@ -11,7 +11,7 @@ export const AppBarProvider = ({ children }) => {
   const [config, setConfig] = useState({
     showBackButton: true,
     backPath: '/',
-    icon: <ArrowBack />,
+    icon: <ArrowBackIosIcon />,
     title: 'NoVoTracker',
   });
 

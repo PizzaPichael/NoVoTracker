@@ -1,47 +1,50 @@
-import React from 'react'
+import React from 'react';
 
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Stack,
   Container,
   BottomNavigation,
-  BottomNavigationAction
-} from '@mui/material'
+  BottomNavigationAction,
+} from '@mui/material';
 
-import {
-  Home as HomeIcon,
-  ImportContacts as ImpfpassIcon,
-  Flight as ReisenIcon
-} from '@mui/icons-material'
-import AppRoutes from './AppRoutes'
-import CustomAppBar from './Components/CustomAppBar'
+import { Home as HomeIcon } from '@mui/icons-material';
+import KitchenIcon from '@mui/icons-material/Kitchen';
+import EmergencyIcon from '@mui/icons-material/Emergency';
+import AppRoutes from './AppRoutes';
+import CustomAppBar from './Components/CustomAppBar';
+
+const BOTTOM_NAV_HEIGHT = 60; // Höhe des Bottom Menus in px
 
 const AppLayout = () => {
-  const location = useLocation()
-  const navigate = useNavigate()
+  const location = useLocation();
+  const navigate = useNavigate();
 
-  let navigationIndex = 0
-  if (location.pathname.startsWith('/')) navigationIndex = 0
-  if (location.pathname.startsWith('/vaccinations')) navigationIndex = 2
-  if (location.pathname.startsWith('/travel')) navigationIndex = 1
+  let navigationIndex = 0;
+  if (location.pathname.startsWith('/pantry')) navigationIndex = 0;
+  if (location.pathname.startsWith('/home')) navigationIndex = 1;
+  if (location.pathname.startsWith('/emergency')) navigationIndex = 2;
 
-  const pathsToHideBottomNav = ['/', '/first_home', '/create_person']
-  const showBottomNav = !pathsToHideBottomNav.includes(location.pathname)
+  const pathsToHideBottomNav = ['/'];
+  const showBottomNav = !pathsToHideBottomNav.includes(location.pathname);
 
-  const pathsToHideTopAppBar = ['/', '/first_home', '/create_person']
-  const showTopAppBar = !pathsToHideTopAppBar.includes(location.pathname)
+  const pathsToHideTopAppBar = ['/'];
+  const showTopAppBar = !pathsToHideTopAppBar.includes(location.pathname);
 
   return (
     <Stack
       sx={{
-        height: '100%'
+        height: '100vh',
+        width: '100vw',
+        overflow: 'hidden',
       }}
     >
       {showTopAppBar && (
         <Container
           sx={{
             height: '50px',
-            width: '100%'
+            flexShrink: 0,
+            width: '100%',
           }}
         >
           <CustomAppBar />
@@ -50,14 +53,14 @@ const AppLayout = () => {
 
       <Stack
         sx={{
-          flex: '1 1 auto',
-          height: 'calc(100% - 125px)',
+          flex: 1,
           overflowX: 'hidden',
           overflowY: 'auto',
           width: '90%',
           alignSelf: 'center',
-          pt: '20px',
-          px: '0px'
+          pt: '10px',
+          px: '0px',
+          pb: showBottomNav ? `${BOTTOM_NAV_HEIGHT + 20}px` : '20px', // Dynamischer Platz für BottomNav
         }}
         alignItems="center"
       >
@@ -69,32 +72,32 @@ const AppLayout = () => {
           value={navigationIndex}
           sx={{
             width: '90%',
-            height: '75px',
-            position: 'absolute',
-            bottom: 25,
+            height: `${BOTTOM_NAV_HEIGHT}px`,
+            position: 'fixed',
+            bottom: 10,
             left: '5%',
-            boxShadow: '0px 10px 20px rgba(0, 0, 0, 0.5)'
+            boxShadow: '0px 10px 20px rgba(0, 0, 0, 0.5)',
           }}
         >
+          <BottomNavigationAction
+            label="Vorräte"
+            icon={<KitchenIcon />}
+            onClick={() => navigate('/pantry')}
+          />
           <BottomNavigationAction
             label="Home"
             icon={<HomeIcon />}
             onClick={() => navigate('/home')}
           />
           <BottomNavigationAction
-            label="Reisen"
-            icon={<ReisenIcon />}
-            onClick={() => navigate('/travel')}
-          />
-          <BottomNavigationAction
-            label="Impfpass"
-            icon={<ImpfpassIcon />}
-            onClick={() => navigate('/vaccinations')}
+            label="Notfalll-Liste"
+            icon={<EmergencyIcon />}
+            onClick={() => navigate('/emergency')}
           />
         </BottomNavigation>
       )}
     </Stack>
-  )
-}
+  );
+};
 
-export default AppLayout
+export default AppLayout;

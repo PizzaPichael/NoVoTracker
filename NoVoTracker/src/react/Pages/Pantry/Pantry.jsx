@@ -1,34 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import {
-  loadItems,
-  addItem,
-  updateItem,
-  deleteItem,
-  exportData,
-  importData
-} from '../../utils/storage';
+import { loadDBItems, addDBItem } from '../../utils/storage';
 import {
   Button,
   TextField,
-  List,
-  ListItem,
-  ListItemText,
   IconButton,
   Box,
   Typography,
-  Paper,
-  TableContainer,
   Table,
+  TableBody,
+  TableCell,
+  TableContainer,
   TableHead,
   TableRow,
-  TableBody,
-  TableCell
+  Paper,
+  Checkbox,
 } from '@mui/material';
-import { Delete as DeleteIcon, Save as SaveIcon, Settings } from '@mui/icons-material';
-import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
-import ClearIcon from '@mui/icons-material/Clear';
-
-import { DataGrid } from '@mui/x-data-grid';
 
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
@@ -36,13 +22,35 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 
-import { PANTRY_COLUMNS } from '../../models/pantryColumns';
-import { useAppBar } from '../../Providers/AppBarProvider'
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import Divider from '@mui/material/Divider';
 
+import {
+  Delete as DeleteIcon,
+  Save as SaveIcon,
+  Settings,
+  FileDownload as ExportIcon,
+} from '@mui/icons-material';
+import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
+import ClearIcon from '@mui/icons-material/Clear';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import EditIcon from '@mui/icons-material/Edit';
+import CheckBoxIcon from '@mui/icons-material/CheckBox';
+
+import { ITEM_SCHEMA } from '../../models/itemSchema';
+import { useAppBar } from '../../Providers/AppBarProvider';
+import { StyledMenu } from '../../Components/StyledMenu';
+
+import { insertTestData } from '../../../../scripts/insertTestData';
+
+const keysToExcludeFromTable = ['created', 'id', 'qunatity', 'type', 'expiry'];
+const TABLE_COLUMNS = ITEM_SCHEMA.filter(
+  (col) => !keysToExcludeFromTable.includes(col.key),
+);
 
 const Pantry = () => {
-  const { setConfig } = useAppBar()
-
+  const { setConfig } = useAppBar();
 
   const [items, setItems] = useState([]);
   const [newName, setNewName] = useState('');
@@ -53,151 +61,282 @@ const Pantry = () => {
 
   const [openCreateDialogue, setOpen] = React.useState(false);
 
-  const handleClickOpen = () => {
+  const [menuListAnchorEl, setMenuListAnchorEl] = React.useState(null);
+  const menuListOpen = Boolean(menuListAnchorEl);
+
+  const [checkboxSelectionEnabled, setCheckboxSelectionEnabled] =
+    React.useState(false);
+  const [selectedRows, setSelectedRows] = React.useState([]);
+
+  const handleMenuListClick = (event) => {
+    setMenuListAnchorEl(event.currentTarget);
+  };
+  const handleMenuListClose = () => {
+    setMenuListAnchorEl(null);
+  };
+
+  const handleToggleCheckboxSelection = () => {
+    setCheckboxSelectionEnabled(!checkboxSelectionEnabled);
+    handleMenuListClose();
+  };
+
+  const handleCreateDialogueClick = () => {
     setOpen(true);
   };
 
-  const handleClose = () => {
+  const handleCreateDialogueClose = () => {
     setOpen(false);
   };
-
-  useEffect(() => {
-    loadData();
-  }, []);
 
   useEffect(() => {
     setConfig({
       showBackButton: true,
       backPath: '/',
       icon: <ArrowBackIosIcon />,
-      title: 'NoVo-Tracker'
-    })
+      title: 'NoVo-Tracker',
+    });
   }, [setConfig]);
 
+  // TODO: Remove this after testing - inserts test data
+  useEffect(() => {
+    insertTestData();
+  }, []);
+
   const loadData = async () => {
-    const data = await loadItems();
-    console.log('Geladene Daten:', data);  // Debug-Log
+    const data = await loadDBItems();
+    console.log('Geladene Daten:', data); // Debug-Log
 
     setItems(data);
   };
 
   const handleAdd = async () => {
-    if (!newName || !newType || !newQuantity || !newExpiry || !newLocation) return;
+    if (!newName || !newType || !newQuantity || !newExpiry || !newLocation)
+      return;
 
-    await addItem({
+    await addDBItem({
       name: newName,
       type: newType,
       quantity: newQuantity,
       expiry: newExpiry,
-      location: newLocation
+      location: newLocation,
     });
 
     setNewName('');
     setNewType('');
-    setNewQuantity(null);
+    setNewQuantity('');
     setNewExpiry('');
     setNewLocation('');
 
     await loadData();
   };
 
+  // TODO
   const handleDelete = async (id) => {
-    await deleteItem(id);
-    await loadData();
+    return null;
   };
 
+  // TODO
   const handleExport = async () => {
-    const json = await exportData();
-    const bianryLargeObject = new Blob([json], { type: 'application/json' });
-    const url = URL.createObjectURL(bianryLargeObject);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `pantry-${new Date().toISOString().split('T')[0]}.json`;
-    a.click();
+    return null;
   };
 
-  const rows = [];
-  console.log('items ', items);
-  items.forEach((item) => {
-    const rowObj = {
-      id: item.id,
-      name: item.name,
-      type: item.type,
-      quantity: item.quantity,
-      expiry: item.expiry,
-      location: item.location
-    };
-    rows.push(rowObj);
-  })
+  const handleSelectRow = (id) => {
+    setSelectedRows((prev) => {
+      if (prev.includes(id)) {
+        return prev.filter((rowId) => rowId !== id);
+      } else {
+        return [...prev, id];
+      }
+    });
+  };
 
-  const dataGridColumns = [];
-  PANTRY_COLUMNS.forEach((column) => {
-    const columnObj = {
-      field: column.key,
-      headerName: column.label
+  const handleSelectAll = (event) => {
+    if (event.target.checked) {
+      setSelectedRows(items.map((item) => item.id));
+    } else {
+      setSelectedRows([]);
     }
-    dataGridColumns.push(columnObj);
-  })
+  };
 
   return (
-    <Box sx={{ p: 2 }}>
-      <Typography variant="h4" gutterBottom>
-        Vorratskammer
-      </Typography>
-
-      <TableContainer component={Paper}>
-        <Table sx={{ minWidth: 650 }} aria-label="simple table">
-          <TableHead>
-            <TableRow>
-              {PANTRY_COLUMNS.map(field => (
-                <TableCell
-                  key={field.key}
-                  align="right"
-                >{field.label}</TableCell>
-              ))}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {rows.map((row) => (
-              <TableRow
-                key={row.id + row.name}
-              >
-                <TableCell align="right">{row.name}</TableCell>
-                <TableCell align="right">{row.type}</TableCell>
-                <TableCell align="right">{row.quantity}</TableCell>
-                <TableCell align="right">{row.expiry}</TableCell>
-                <TableCell align="right">{row.location}</TableCell>
-                <TableCell>
-                  <IconButton onClick={() => { handleDelete(row.id) }}>
-                    <DeleteIcon />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-      
-      <Box>
-        <DataGrid rows={rows} columns={dataGridColumns}></DataGrid>
+    <Box
+      id="pantry-content"
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        width: '100%',
+        height: '100%', // Nutzt die verfügbare Höhe vom AppLayout
+        overflow: 'hidden',
+      }}
+    >
+      {/* ---Header and more-menu--- */}
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          mb: 1,
+          flexShrink: 0, // Header soll nicht schrumpfen
+        }}
+      >
+        <Typography variant="h4">Vorratskammer</Typography>
+        <IconButton
+          id="MenuListButton"
+          onClick={handleMenuListClick}
+          aria-controls={menuListOpen ? 'demo-customized-menu' : undefined}
+          aria-haspopup="true"
+          aria-expanded={menuListOpen ? 'true' : undefined}
+        >
+          <MoreVertIcon />
+        </IconButton>
+        <StyledMenu
+          id="demo-customized-menu"
+          slotProps={{
+            list: {
+              'aria-labelledby': 'demo-customized-button',
+            },
+          }}
+          anchorEl={menuListAnchorEl}
+          open={menuListOpen}
+          onClose={handleMenuListClose}
+        >
+          <MenuItem onClick={handleToggleCheckboxSelection} disableRipple>
+            <CheckBoxIcon />
+            {checkboxSelectionEnabled
+              ? 'Auswahl deaktivieren'
+              : 'Einträge auswählen'}
+          </MenuItem>
+          <MenuItem onClick={handleMenuListClose} disableRipple>
+            <DeleteIcon />
+            Einträge löschen
+          </MenuItem>
+          <MenuItem
+            onClick={() => {
+              handleExport();
+              handleMenuListClose();
+            }}
+            disableRipple
+          >
+            <ExportIcon />
+            Daten exportieren
+          </MenuItem>
+        </StyledMenu>
       </Box>
 
-      <Box>
-        <Button variant="outlined" onClick={handleClickOpen} sx={{ mt: 1 }}>
+      {/* ---Table--- */}
+      <Box
+        sx={{
+          flex: 1,
+          width: '100%',
+          minHeight: 0,
+          mb: 1,
+          overflow: 'auto',
+        }}
+      >
+        <TableContainer
+          component={Paper}
+          sx={{ height: '100%', maxWidth: '100%' }}
+        >
+          <Table stickyHeader sx={{ width: '100%', tableLayout: 'auto' }}>
+            <TableHead>
+              <TableRow>
+                {checkboxSelectionEnabled && (
+                  <TableCell padding="checkbox">
+                    <Checkbox
+                      checked={
+                        selectedRows.length === items.length && items.length > 0
+                      }
+                      indeterminate={
+                        selectedRows.length > 0 &&
+                        selectedRows.length < items.length
+                      }
+                      onChange={handleSelectAll}
+                    />
+                  </TableCell>
+                )}
+                {TABLE_COLUMNS.map((column) => (
+                  <TableCell
+                    key={column.key}
+                    sx={{
+                      maxWidth: 150,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    <strong>{column.label}</strong>
+                  </TableCell>
+                ))}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {items.map((item) => (
+                <TableRow
+                  key={item.id}
+                  hover
+                  selected={selectedRows.includes(item.id)}
+                  sx={{
+                    cursor: checkboxSelectionEnabled ? 'pointer' : 'default',
+                  }}
+                  onClick={() =>
+                    checkboxSelectionEnabled && handleSelectRow(item.id)
+                  }
+                >
+                  {checkboxSelectionEnabled && (
+                    <TableCell padding="checkbox">
+                      <Checkbox checked={selectedRows.includes(item.id)} />
+                    </TableCell>
+                  )}
+                  {TABLE_COLUMNS.map((column) => (
+                    <TableCell
+                      key={column.key}
+                      sx={{
+                        maxWidth: 150,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {item[column.key]}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Box>
+
+      {/* AddEntry Button */}
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          flexShrink: 0, // Button soll nicht schrumpfen
+          pb: 0,
+        }}
+      >
+        <Button variant="outlined" onClick={handleCreateDialogueClick}>
           Eintrag hinzufügen
         </Button>
-        <Dialog open={openCreateDialogue} onClose={handleClose}>
-          <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span>Subscribe</span>
-            <IconButton onClick={handleClose}>
+        <Dialog open={openCreateDialogue} onClose={handleCreateDialogueClose}>
+          <DialogTitle
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <span>Eintrag hinzufügen</span>
+            <IconButton onClick={handleCreateDialogueClose}>
               <ClearIcon />
             </IconButton>
           </DialogTitle>
           <DialogContent>
-
             <DialogContentText>
-              To subscribe to this website, please enter your email address here. We
-              will send updates occasionally.
+              Bitte fülle <strong>alle</strong> unten stehenden Felder aus um
+              einen neuen Eintrag zu erstellen.
             </DialogContentText>
             <Box sx={{ mb: 1 }}>
               <TextField
@@ -250,16 +389,6 @@ const Pantry = () => {
           </DialogContent>
         </Dialog>
       </Box>
-      <Box>
-        <Button onClick={handleExport} sx={{ mt: 2 }}>
-          Daten exportieren
-        </Button>
-      </Box>
-
-
-      <Typography variant="caption" sx={{ display: 'block', mt: 2 }}>
-        Gespeicherte Lebensmittel: {items.length}
-      </Typography>
     </Box>
   );
 };

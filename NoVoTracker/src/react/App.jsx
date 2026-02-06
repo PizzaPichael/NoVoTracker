@@ -85,7 +85,7 @@ if (container) {
           <AppLayout />
         </Router>
       </ThemeProvider>
-    </AppBarProvider>
+    </AppBarProvider>,
   );
 }
 
