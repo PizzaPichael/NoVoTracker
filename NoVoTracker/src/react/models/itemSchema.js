@@ -10,6 +10,23 @@ export const DEFAULT_STORAGE_LOCATIONS = {
     CELLAR: 'Keller'
 };
 
+export const DEFAULT_QUANTITY_UNITS = {
+    // Gewicht
+    GRAM: 'g',
+    KILOGRAM: 'kg',
+    MILLIGRAM: 'mg',
+    // Volumen
+    LITER: 'l',
+    MILLILITER: 'ml',
+    // Stück
+    PIECE: 'Stk.',
+    // Packungen
+    PACKAGE: 'Pkg.',
+    CAN: 'Dose',
+    JAR: 'Glas',
+    BOTTLE: 'Fl.',
+};
+
 /**
  * Complete item schema
  * - dbType: SQLite column definition
@@ -46,6 +63,15 @@ export const ITEM_SCHEMA = [
         dbType: 'INTEGER',
         uiType: 'number',
         required: false
+    },
+    {
+        key: 'quantityUnit',
+        label: 'Einheit',
+        dbType: 'TEXT',
+        uiType: 'select',
+        required: false,
+        defaultOptions: DEFAULT_QUANTITY_UNITS,
+        allowCustom: false
     },
     {
         key: 'expiry',

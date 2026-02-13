@@ -93,7 +93,7 @@ export const addDBItem = async (item) => {
     const db = await waitForDB();
     
     // Nur die relevanten Spalten (ohne id und created)
-    const columns = ['name', 'type', 'quantity', 'expiry', 'daysUntilExpired', 'location'];
+    const columns = ['name', 'type', 'quantity', 'quantityUnit', 'expiry', 'daysUntilExpired', 'location'];
     const placeholders = columns.map(() => '?').join(', ');
     const query = `INSERT INTO items (${columns.join(', ')}) VALUES (${placeholders})`;
     
@@ -101,6 +101,7 @@ export const addDBItem = async (item) => {
         item.name,
         item.type,
         item.quantity || 0,
+        item.quantityUnit || null,
         item.expiry || null,
         calculateDaysUntilExpired(item.expiry) || null,
         item.location || null
@@ -115,7 +116,7 @@ export const updateDBItem = async (id, updates) => {
     const db = await waitForDB();
     
     // Nur erlaubte Spalten (keine id oder created Updates)
-    const allowedColumns = ['name', 'type', 'quantity', 'expiry', 'daysUntilExpired', 'location'];
+    const allowedColumns = ['name', 'type', 'quantity', 'quantityUnit', 'expiry', 'daysUntilExpired', 'location'];
     
     // Filtere nur die Spalten, die im updates-Objekt vorhanden sind
     const columns = Object.keys(updates).filter(key => allowedColumns.includes(key));
@@ -144,6 +145,15 @@ export const deleteDBItem = async (id) => {
     const query = 'DELETE FROM items WHERE id = ?';
     const result = await db.run(query, [id]);
     console.log('Item deleted:', result);
+    return result;
+};
+
+export const deleteAllDBItems = async () => {
+    const db = await waitForDB();
+    
+    const query = 'DELETE FROM items';
+    const result = await db.run(query);
+    console.log('All items deleted:', result);
     return result;
 };
 

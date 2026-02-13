@@ -20,6 +20,7 @@ import {
   MenuItem,
   FormControl,
   OutlinedInput,
+  InputLabel,
 } from '@mui/material';
 
 import Dialog from '@mui/material/Dialog';
@@ -43,12 +44,12 @@ import EditIcon from '@mui/icons-material/Edit';
 import CheckBoxIcon from '@mui/icons-material/CheckBox';
 import { visuallyHidden } from '@mui/utils';
 
-import { ITEM_SCHEMA, DEFAULT_STORAGE_LOCATIONS } from '../../models/itemSchema';
+import { ITEM_SCHEMA, DEFAULT_STORAGE_LOCATIONS, DEFAULT_QUANTITY_UNITS } from '../../models/itemSchema';
 import { StyledMenu } from '../../Components/StyledMenu';
 
 import { insertTestData } from '../../../../scripts/insertTestData';
 
-const keysToExcludeFromTable = ['created', 'id', 'qunatity', 'type', 'expiry'];
+const keysToExcludeFromTable = ['created', 'id', 'qunatity', 'type', 'expiry', 'quantityUnit'];
 const TABLE_COLUMNS = ITEM_SCHEMA.filter(
   (col) => !keysToExcludeFromTable.includes(col.key),
 );
@@ -116,11 +117,14 @@ function Row(props) {
               textOverflow: 'ellipsis',
               py: 1,
               px: 1,
-              ...(column.key === 'quantity' && { width: '60px', maxWidth: '80px' }),
+              ...(column.key === 'quantity' && { width: '85px', maxWidth: '100px' }),
               ...(column.key === 'daysUntilExpired' && { width: '85px', maxWidth: '85px' }),
             }}
           >
-            {item[column.key]}
+            {column.key === 'quantity' 
+              ? `${item.quantity || ''} ${item.quantityUnit || ''}`.trim()
+              : item[column.key]
+            }
           </TableCell>
         ))}
       </TableRow>
@@ -223,7 +227,8 @@ const Pantry = () => {
   const [items, setItems] = useState([]);
   const [newName, setNewName] = useState('');
   const [newType, setNewType] = useState('');
-  const [newQuantity, setNewQuantity] = useState(null);
+  const [newQuantity, setNewQuantity] = useState('');
+  const [newQuantityUnit, setNewQuantityUnit] = useState('');
   const [newExpiry, setNewExpiry] = useState('');
   const [newLocation, setNewLocation] = useState('');
 
@@ -295,6 +300,7 @@ const Pantry = () => {
       name: newName,
       type: newType,
       quantity: newQuantity,
+      quantityUnit: newQuantityUnit,
       expiry: newExpiry,
       location: newLocation,
     });
@@ -302,6 +308,7 @@ const Pantry = () => {
     setNewName('');
     setNewType('');
     setNewQuantity('');
+    setNewQuantityUnit('');
     setNewExpiry('');
     setNewLocation('');
 
@@ -553,7 +560,7 @@ const Pantry = () => {
           <DialogContent>
             <DialogContentText>
               Bitte fülle <strong>alle</strong> unten stehenden Felder aus um
-              einen neuen Eintrag zu erstellen.
+              einen neuen Eintrag zu erstellen. Die Erstellung erfolgt sonst nicht.
             </DialogContentText>
             <Box sx={{ mb: 1 }}>
               <TextField
@@ -570,13 +577,29 @@ const Pantry = () => {
                 fullWidth
                 sx={{ mb: 1 }}
               />
-              <TextField
-                label="Menge"
-                value={newQuantity}
-                onChange={(e) => setNewQuantity(e.target.value)}
-                fullWidth
-                sx={{ mb: 1 }}
-              />
+              <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
+                <TextField
+                  label="Menge"
+                  value={newQuantity}
+                  onChange={(e) => setNewQuantity(e.target.value)}
+                  sx={{ flex: 3 }}
+                />
+                <FormControl sx={{ flex: 1 }}>
+                  <InputLabel id="quantity-unit-select-label">Einheit</InputLabel>
+                  <Select
+                    labelId="quantity-unit-select-label"
+                    value={newQuantityUnit}
+                    onChange={(e) => setNewQuantityUnit(e.target.value)}
+                    label="Einheit"
+                  >
+                    {Object.values(DEFAULT_QUANTITY_UNITS).map((unit) => (
+                      <MenuItem key={unit} value={unit}>
+                        {unit}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Box>
               <TextField
                 label="MHD"
                 type="date"
@@ -586,13 +609,21 @@ const Pantry = () => {
                 InputLabelProps={{ shrink: true }}
                 sx={{ mb: 1 }}
               />
-              <TextField
-                label="Lagerort"
-                value={newLocation}
-                onChange={(e) => setNewLocation(e.target.value)}
-                fullWidth
-                sx={{ mb: 2 }}
-              />
+              <FormControl fullWidth sx={{ mb: 2 }}>
+                <InputLabel id="lagerort-select-label">Lagerort</InputLabel>
+                <Select
+                  labelId="lagerort-select-label"
+                  value={newLocation}
+                  onChange={(e) => setNewLocation(e.target.value)}
+                  label="Lagerort"
+                >
+                  {Object.values(DEFAULT_STORAGE_LOCATIONS).map((location) => (
+                    <MenuItem key={location} value={location}>
+                      {location}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
               <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
                 <Button
                   variant="contained"

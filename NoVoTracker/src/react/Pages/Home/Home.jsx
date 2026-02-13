@@ -19,7 +19,7 @@ import { loadDBItems } from '../../utils/storage'
 import { ITEM_SCHEMA } from '../../models/itemSchema'
 
 // Table configuration - same as Pantry
-const keysToExcludeFromTable = ['created', 'id', 'qunatity', 'type', 'expiry'];
+const keysToExcludeFromTable = ['created', 'id', 'qunatity', 'type', 'expiry', 'quantityUnit'];
 const TABLE_COLUMNS = ITEM_SCHEMA.filter(
   (col) => !keysToExcludeFromTable.includes(col.key),
 );
@@ -49,13 +49,16 @@ function Row(props) {
             sx={{
               overflow: 'hidden',
               textOverflow: 'ellipsis',
-              py: 1,
+              py: 0.7,
               px: 1,
-              ...(column.key === 'quantity' && { width: '60px', maxWidth: '80px' }),
-              ...(column.key === 'daysUntilExpired' && { width: '85px', maxWidth: '85px' }),
+              ...(column.key === 'quantity' && { width: '70px', maxWidth: '85px' }),
+              ...(column.key === 'daysUntilExpired' && { width: '75px', maxWidth: '75px' }),
             }}
           >
-            {item[column.key]}
+            {column.key === 'quantity' 
+              ? `${item.quantity || ''} ${item.quantityUnit || ''}`.trim()
+              : item[column.key]
+            }
           </TableCell>
         ))}
       </TableRow>
@@ -64,9 +67,6 @@ function Row(props) {
           <Collapse in={open} timeout="auto" unmountOnExit>
             <Box sx={{ margin: 2 }}>
               <Box sx={{ display: 'grid', gridTemplateColumns: '150px 1fr', gap: 1 }}>
-                <Typography variant="body2" sx={{ fontWeight: 'bold' }}>Typ:</Typography>
-                <Typography variant="body2">{item.type || '-'}</Typography>
-                
                 <Typography variant="body2" sx={{ fontWeight: 'bold' }}>MHD:</Typography>
                 <Typography variant="body2">{item.expiry || '-'}</Typography>
                 
@@ -121,9 +121,9 @@ const Home = () => {
       sx={{ height: '100%' }}
     >
       <Stack direction="row" alignItems="center" justifyContent="space-between">
-        <Stack direction="column">
-          <Typography variant="h4">NoVo-Tracker</Typography>
-          <Typography variant="subtitle1" color="text.secondary">
+        <Stack direction="column" alignItems="center" justifyContent="center" width="100%">
+          <Typography variant="h4" sx={{ flexGrow: 1, textAlign: 'center' }}>NoVo-Tracker</Typography>
+          <Typography variant="subtitle1" color="text.secondary" sx={{ flexGrow: 1, textAlign: 'center' }}>
             Deine (Notfall-)Vorratskammer
           </Typography>
         </Stack>
