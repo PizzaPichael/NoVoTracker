@@ -12,6 +12,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TableSortLabel,
   Paper,
   Checkbox,
 } from '@mui/material';
@@ -37,6 +38,7 @@ import ClearIcon from '@mui/icons-material/Clear';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import EditIcon from '@mui/icons-material/Edit';
 import CheckBoxIcon from '@mui/icons-material/CheckBox';
+import { visuallyHidden } from '@mui/utils';
 
 import { ITEM_SCHEMA } from '../../models/itemSchema';
 import { useAppBar } from '../../Providers/AppBarProvider';
@@ -48,6 +50,99 @@ const keysToExcludeFromTable = ['created', 'id', 'qunatity', 'type', 'expiry'];
 const TABLE_COLUMNS = ITEM_SCHEMA.filter(
   (col) => !keysToExcludeFromTable.includes(col.key),
 );
+
+// Sortier-Funktionen nach MUI-Muster
+function descendingComparator(a, b, orderBy) {
+  // Null/Undefined Behandlung
+  if (b[orderBy] == null) return -1;
+  if (a[orderBy] == null) return 1;
+  
+  if (b[orderBy] < a[orderBy]) {
+    return -1;
+  }
+  if (b[orderBy] > a[orderBy]) {
+    return 1;
+  }
+  return 0;
+}
+
+function getComparator(order, orderBy) {
+  return order === 'desc'
+    ? (a, b) => descendingComparator(a, b, orderBy)
+    : (a, b) => -descendingComparator(a, b, orderBy);
+}
+
+// EnhancedTableHead Komponente
+function EnhancedTableHead(props) {
+  const { 
+    onSelectAllClick, 
+    order, 
+    orderBy, 
+    numSelected, 
+    rowCount, 
+    onRequestSort,
+    checkboxSelectionEnabled,
+    filters,
+    onFilterChange,
+  } = props;
+
+  const createSortHandler = (property) => (event) => {
+    onRequestSort(event, property);
+  };
+
+  return (
+    <TableHead>
+      <TableRow>
+        {checkboxSelectionEnabled && (
+          <TableCell padding="checkbox">
+            <Checkbox
+              color="primary"
+              indeterminate={numSelected > 0 && numSelected < rowCount}
+              checked={rowCount > 0 && numSelected === rowCount}
+              onChange={onSelectAllClick}
+              inputProps={{
+                'aria-label': 'alle Einträge auswählen',
+              }}
+            />
+          </TableCell>
+        )}
+        {TABLE_COLUMNS.map((column) => (
+          <TableCell
+            key={column.key}
+            sx={{
+              whiteSpace: 'normal',
+              wordWrap: 'break-word',
+              ...(column.key === 'quantity' && { width: '80px', maxWidth: '80px' }),
+              ...(column.key === 'daysUntilExpired' && { width: '85px', maxWidth: '85px' }),
+            }}
+          >
+            <TableSortLabel
+              active={orderBy === column.key}
+              direction={orderBy === column.key ? order : 'asc'}
+              onClick={createSortHandler(column.key)}
+            >
+              <strong>{column.label}</strong>
+              {orderBy === column.key ? (
+                <Box component="span" sx={visuallyHidden}>
+                  {order === 'desc' ? 'absteigend sortiert' : 'aufsteigend sortiert'}
+                </Box>
+              ) : null}
+            </TableSortLabel>
+            <TextField
+              size="small"
+              placeholder="Filter..."
+              value={filters[column.key] || ''}
+              onChange={(e) => onFilterChange(column.key, e.target.value)}
+              onClick={(e) => e.stopPropagation()} // Verhindert Sortierung beim Klick auf Filter
+              sx={{ mt: 0.5, width: '100%' }}
+              inputProps={{ style: { fontSize: '0.875rem' } }}
+            />
+          </TableCell>
+        ))}
+      </TableRow>
+    </TableHead>
+  );
+}
 
 const Pantry = () => {
   const { setConfig } = useAppBar();
@@ -67,6 +162,11 @@ const Pantry = () => {
   const [checkboxSelectionEnabled, setCheckboxSelectionEnabled] =
     React.useState(false);
   const [selectedRows, setSelectedRows] = React.useState([]);
+
+  // Sortierung und Filter
+  const [orderBy, setOrderBy] = React.useState('name');
+  const [order, setOrder] = React.useState('asc');
+  const [filters, setFilters] = React.useState({});
 
   const handleMenuListClick = (event) => {
     setMenuListAnchorEl(event.currentTarget);
@@ -109,6 +209,14 @@ const Pantry = () => {
     setItems(data);
   };
 
+  useEffect(() => {
+    const fetchData = async () => {
+      await loadData();
+    };
+    fetchData();
+  }, []);
+
+
   const handleAdd = async () => {
     if (!newName || !newType || !newQuantity || !newExpiry || !newLocation)
       return;
@@ -131,6 +239,7 @@ const Pantry = () => {
   };
 
   // TODO
+  // eslint-disable-next-line no-unused-vars
   const handleDelete = async (id) => {
     return null;
   };
@@ -152,11 +261,45 @@ const Pantry = () => {
 
   const handleSelectAll = (event) => {
     if (event.target.checked) {
-      setSelectedRows(items.map((item) => item.id));
+      const visibleIds = visibleRows.map((item) => item.id);
+      setSelectedRows(visibleIds);
     } else {
       setSelectedRows([]);
     }
   };
+
+  // Sortierung nach MUI-Muster
+  const handleRequestSort = (event, property) => {
+    const isAsc = orderBy === property && order === 'asc';
+    setOrder(isAsc ? 'desc' : 'asc');
+    setOrderBy(property);
+  };
+
+  // Filter
+  const handleFilterChange = (columnKey, value) => {
+    setFilters((prev) => ({
+      ...prev,
+      [columnKey]: value,
+    }));
+  };
+
+  // Gefilterte und sortierte Items (React Compiler optimiert automatisch)
+  let visibleRows = [...items];
+  
+  // Filtern
+  Object.keys(filters).forEach((key) => {
+    const filterValue = filters[key];
+    if (filterValue) {
+      visibleRows = visibleRows.filter((item) =>
+        String(item[key]).toLowerCase().includes(filterValue.toLowerCase())
+      );
+    }
+  });
+
+  // Sortieren mit MUI Comparator
+  if (orderBy) {
+    visibleRows.sort(getComparator(order, orderBy));
+  }
 
   return (
     <Box
@@ -230,47 +373,31 @@ const Pantry = () => {
           width: '100%',
           minHeight: 0,
           mb: 1,
-          overflow: 'auto',
         }}
       >
         <TableContainer
           component={Paper}
-          sx={{ height: '100%', maxWidth: '100%' }}
+          sx={{ 
+            height: '100%', 
+            width: '100%', 
+            overflowY: 'auto',
+            overflowX: 'hidden',
+          }}
         >
-          <Table stickyHeader sx={{ width: '100%', tableLayout: 'auto' }}>
-            <TableHead>
-              <TableRow>
-                {checkboxSelectionEnabled && (
-                  <TableCell padding="checkbox">
-                    <Checkbox
-                      checked={
-                        selectedRows.length === items.length && items.length > 0
-                      }
-                      indeterminate={
-                        selectedRows.length > 0 &&
-                        selectedRows.length < items.length
-                      }
-                      onChange={handleSelectAll}
-                    />
-                  </TableCell>
-                )}
-                {TABLE_COLUMNS.map((column) => (
-                  <TableCell
-                    key={column.key}
-                    sx={{
-                      maxWidth: 150,
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    <strong>{column.label}</strong>
-                  </TableCell>
-                ))}
-              </TableRow>
-            </TableHead>
+          <Table stickyHeader sx={{ width: '100%', tableLayout: 'fixed' }}>
+            <EnhancedTableHead
+              numSelected={selectedRows.length}
+              order={order}
+              orderBy={orderBy}
+              onSelectAllClick={handleSelectAll}
+              onRequestSort={handleRequestSort}
+              rowCount={visibleRows.length}
+              checkboxSelectionEnabled={checkboxSelectionEnabled}
+              filters={filters}
+              onFilterChange={handleFilterChange}
+            />
             <TableBody>
-              {items.map((item) => (
+              {visibleRows.map((item) => (
                 <TableRow
                   key={item.id}
                   hover
@@ -291,10 +418,11 @@ const Pantry = () => {
                     <TableCell
                       key={column.key}
                       sx={{
-                        maxWidth: 150,
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
+                        // Bedingte Breiten für bestimmte Spalten
+                        ...(column.key === 'quantity' && { width: '60px', maxWidth: '80px' }),
+                        ...(column.key === 'daysUntilExpired' && { width: '85px', maxWidth: '85px' }),
                       }}
                     >
                       {item[column.key]}

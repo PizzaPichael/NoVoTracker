@@ -10,6 +10,12 @@ import { createTheme, ThemeProvider } from '@mui/material/styles';
 import AppLayout from './AppLayout';
 import { AppBarProvider } from './Providers/AppBarProvider';
 
+// Capacitor SQLite imports
+import { defineCustomElements as jeepSqlite } from 'jeep-sqlite/loader';
+import { Capacitor } from '@capacitor/core';
+import { CapacitorSQLite, SQLiteConnection } from '@capacitor-community/sqlite';
+import { initDB } from './utils/storage';
+
 const colors = {
   secondary: '#E8E5F5',
   primary: '#1F3442',
@@ -74,10 +80,9 @@ const theme = createTheme({
   },
 });
 
-const container = document.getElementById('root');
-if (container) {
-  const root = createRoot(container);
-  root.render(
+// Exportierte App-Komponente
+export function App() {
+  return (
     <AppBarProvider>
       <ThemeProvider theme={theme}>
         <CssBaseline />
@@ -85,9 +90,48 @@ if (container) {
           <AppLayout />
         </Router>
       </ThemeProvider>
-    </AppBarProvider>,
+    </AppBarProvider>
   );
 }
+
+// jeep-sqlite Custom Elements registrieren
+jeepSqlite(window);
+
+// Auf DOMContentLoaded warten, dann SQLite initialisieren und React rendern
+window.addEventListener('DOMContentLoaded', async () => {
+  const platform = Capacitor.getPlatform();
+  const sqlite = new SQLiteConnection(CapacitorSQLite);
+  
+  try {
+    if (platform === "web") {
+      // jeep-sqlite Element zum DOM hinzufügen
+      const jeepEl = document.createElement("jeep-sqlite");
+      jeepEl.setAttribute("wasmpath", "./");
+      document.body.appendChild(jeepEl);
+      await customElements.whenDefined('jeep-sqlite');
+      
+      // Web Store initialisieren (am SQLiteConnection-Objekt, nicht am Element)
+      await sqlite.initWebStore();
+      
+      console.log('jeep-sqlite initialized successfully');
+    }
+    
+    // Datenbank initialisieren
+    await initDB();
+    console.log('Database initialized successfully');
+    
+    // React App starten
+    const container = document.getElementById('root');
+    if (container) {
+      const root = createRoot(container);
+      root.render(<App />);
+    }
+
+  } catch (err) {
+    console.error(`Error: ${err}`);
+    throw new Error(`Error: ${err}`);
+  }
+});
 
 // register the Workbox‐generated service worker.
 // It tells the client to install the service worker which is needed for PWA functionality.

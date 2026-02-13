@@ -57,7 +57,7 @@ export const ITEM_SCHEMA = [
     },
     {
         key: 'daysUntilExpired',
-        label: 'Haltbarkeitstage',
+        label: 'Tage Haltbar',
         dbType: 'INTEGER',
         uiType: 'number',
         required: false
@@ -79,15 +79,6 @@ export const ITEM_SCHEMA = [
         required: false
     }
 ];
-
-/**
- * Generates CREATE TABLE SQL from schema
- */
-export const generateCreateTableSQL = (tableName = 'items') => {
-    const columns = ITEM_SCHEMA.map(col => `${col.key} ${col.dbType}`).join(',\n    ');
-    return `CREATE TABLE IF NOT EXISTS ${tableName} (\n    ${columns}\n  );`;
-};
-
 /**
  * Get all column keys except auto-generated ones
  */

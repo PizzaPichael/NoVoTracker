@@ -25,7 +25,7 @@ const testData = [
 
 export const insertTestData = async () => {
     const existing = await loadDBItems();
-    if (existing.length > 20) {
+    if (existing.length >= 20) {
         return 0;
     }
 

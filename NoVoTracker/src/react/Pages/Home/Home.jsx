@@ -5,9 +5,14 @@ import { Settings } from '@mui/icons-material'
 
 import { useAppBar } from '../../Providers/AppBarProvider'
 
+import { useNavigate } from 'react-router-dom';
+
+
 
 const Home = () => {
   const { setConfig } = useAppBar()
+    const navigate = useNavigate();
+
 
   useEffect(() => {
     setConfig({
@@ -38,7 +43,7 @@ const Home = () => {
         Keine Lebensmittel vorhanden
       </Typography>
       <Divider sx={dividerSx}>Vorratskammer</Divider>
-      < Button variant="text" href="/pantry" color="text.secondary">
+      < Button variant="text" onClick={() => navigate('/pantry')} color="text.secondary">
         Zur Vorratskammer
       </Button>
     </Stack>
