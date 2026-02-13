@@ -37,6 +37,7 @@ const CustomAppBar = () => {
           variant="h6"
           color="inherit"
           component="div"
+          sx={{ flexGrow: 1, textAlign: 'center', mr: config.showBackButton ? 6 : 0 }}
         >
           {config.title}
         </Typography>

@@ -26,13 +26,18 @@ const AppLayout = () => {
   // Dynamisches Label basierend auf Route
   useEffect(() => {
     let title = 'NoVoTracker';
+    let showBackButton = true;
     
     if (location.pathname.startsWith('/pantry')) title = 'Vorräte';
-    if (location.pathname.startsWith('/home')) title = 'Home';
+    if (location.pathname.startsWith('/home')) {
+      title = 'Home';
+      showBackButton = false;
+    }
     if (location.pathname.startsWith('/emergency')) title = 'Notfall-Liste';
+    if (location.pathname.startsWith('/test')) title = 'Test';
 
     setConfig({
-      showBackButton: true,
+      showBackButton,
       backPath: '/',
       icon: <ArrowBackIosIcon />,
       title,

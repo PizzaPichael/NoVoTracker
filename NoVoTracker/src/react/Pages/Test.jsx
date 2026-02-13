@@ -1,22 +1,10 @@
-import React, { useEffect } from 'react';
-import { useAppBar } from '../Providers/AppBarProvider';
-import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
+import React from 'react';
 import { Button } from '@mui/material';
 import { loadDBItems } from '../utils/storage';
 import { insertTestData } from '../../../scripts/insertTestData';
   
 
 const Test = () => {
-    const { setConfig } = useAppBar();
-
-    useEffect(() => {
-    setConfig({
-      showBackButton: true,
-      backPath: '/',
-      icon: <ArrowBackIosIcon />,
-      title: 'NoVo-Tracker',
-    });
-  }, [setConfig]);
 
     const handleLoadItems = async () => {
         try {
