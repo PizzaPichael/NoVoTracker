@@ -2,12 +2,12 @@ import { addDBItem, loadDBItems } from '../src/react/utils/storage';
 
 const testData = [
     { name: 'Milch', type: 'Molkereiprodukt', quantity: 2, quantityUnit: 'l', expiry: '2026-02-15', location: 'Kühlschrank' },
-    { name: 'Brot', type: 'Backware', quantity: 1, quantityUnit: 'Stk', expiry: '2026-02-10', location: 'Vorratsschrank' },
+    { name: 'Vollkornbrot', type: 'Backware', quantity: 355, quantityUnit: 'g', expiry: '2026-02-10', location: 'Vorratsschrank' },
     { name: 'Käse', type: 'Molkereiprodukt', quantity: 300, quantityUnit: 'g', expiry: '2026-02-20', location: 'Kühlschrank' },
     { name: 'Tomaten', type: 'Gemüse', quantity: 5, quantityUnit: 'Stk', expiry: '2026-02-12', location: 'Kühlschrank' },
     { name: 'Äpfel', type: 'Obst', quantity: 8, quantityUnit: 'Stk', expiry: '2026-02-25', location: 'Vorratsschrank' },
     { name: 'Hähnchen', type: 'Fleisch', quantity: 500, quantityUnit: 'g', expiry: '2026-02-08', location: 'Kühlschrank' },
-    { name: 'Nudeln', type: 'Trockenwaren', quantity: 1000, quantityUnit: 'g', expiry: '2027-06-30', location: 'Vorratsschrank' },
+    { name: 'Nudeln', type: 'Trockenwaren', quantity: 140, quantityUnit: 'g', expiry: '2027-06-30', location: 'Vorratsschrank' },
     { name: 'Reis', type: 'Trockenwaren', quantity: 2, quantityUnit: 'kg', expiry: '2027-08-15', location: 'Vorratsschrank' },
     { name: 'Joghurt', type: 'Molkereiprodukt', quantity: 4, quantityUnit: 'Stk', expiry: '2026-02-14', location: 'Kühlschrank' },
     { name: 'Butter', type: 'Molkereiprodukt', quantity: 250, quantityUnit: 'g', expiry: '2026-03-05', location: 'Kühlschrank' },
