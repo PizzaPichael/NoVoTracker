@@ -15,6 +15,11 @@ import {
   TableSortLabel,
   Paper,
   Checkbox,
+  Collapse,
+  Select,
+  MenuItem,
+  FormControl,
+  OutlinedInput,
 } from '@mui/material';
 
 import Dialog from '@mui/material/Dialog';
@@ -24,7 +29,6 @@ import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 
 import Menu from '@mui/material/Menu';
-import MenuItem from '@mui/material/MenuItem';
 import Divider from '@mui/material/Divider';
 
 import {
@@ -39,7 +43,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import CheckBoxIcon from '@mui/icons-material/CheckBox';
 import { visuallyHidden } from '@mui/utils';
 
-import { ITEM_SCHEMA } from '../../models/itemSchema';
+import { ITEM_SCHEMA, DEFAULT_STORAGE_LOCATIONS } from '../../models/itemSchema';
 import { StyledMenu } from '../../Components/StyledMenu';
 
 import { insertTestData } from '../../../../scripts/insertTestData';
@@ -68,6 +72,78 @@ function getComparator(order, orderBy) {
   return order === 'desc'
     ? (a, b) => descendingComparator(a, b, orderBy)
     : (a, b) => -descendingComparator(a, b, orderBy);
+}
+
+// Row-Komponente mit Collapse-Funktionalität
+function Row(props) {
+  const { 
+    item, 
+    checkboxSelectionEnabled, 
+    isSelected, 
+    onSelectRow 
+  } = props;
+  const [open, setOpen] = React.useState(false);
+
+  const handleRowClick = () => {
+    if (checkboxSelectionEnabled) {
+      onSelectRow(item.id);
+    } else {
+      setOpen(!open);
+    }
+  };
+
+  return (
+    <React.Fragment>
+      <TableRow
+        hover
+        selected={isSelected}
+        sx={{
+          '& > *': { borderBottom: 'unset' },
+          cursor: 'pointer',
+        }}
+        onClick={handleRowClick}
+      >
+        {checkboxSelectionEnabled && (
+          <TableCell padding="checkbox">
+            <Checkbox checked={isSelected} />
+          </TableCell>
+        )}
+        {TABLE_COLUMNS.map((column) => (
+          <TableCell
+            key={column.key}
+            sx={{
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              py: 1,
+              px: 1,
+              ...(column.key === 'quantity' && { width: '60px', maxWidth: '80px' }),
+              ...(column.key === 'daysUntilExpired' && { width: '85px', maxWidth: '85px' }),
+            }}
+          >
+            {item[column.key]}
+          </TableCell>
+        ))}
+      </TableRow>
+      <TableRow>
+        <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={checkboxSelectionEnabled ? TABLE_COLUMNS.length + 1 : TABLE_COLUMNS.length}>
+          <Collapse in={open} timeout="auto" unmountOnExit>
+            <Box sx={{ margin: 2 }}>
+              <Box sx={{ display: 'grid', gridTemplateColumns: '150px 1fr', gap: 1 }}>
+                <Typography variant="body2" sx={{ fontWeight: 'bold' }}>Typ:</Typography>
+                <Typography variant="body2">{item.type || '-'}</Typography>
+                
+                <Typography variant="body2" sx={{ fontWeight: 'bold' }}>MHD:</Typography>
+                <Typography variant="body2">{item.expiry || '-'}</Typography>
+                
+                <Typography variant="body2" sx={{ fontWeight: 'bold' }}>Erstellt am:</Typography>
+                <Typography variant="body2">{item.created || '-'}</Typography>
+              </Box>
+            </Box>
+          </Collapse>
+        </TableCell>
+      </TableRow>
+    </React.Fragment>
+  );
 }
 
 // EnhancedTableHead Komponente
@@ -110,6 +186,7 @@ function EnhancedTableHead(props) {
             sx={{
               whiteSpace: 'normal',
               wordWrap: 'break-word',
+              verticalAlign: 'bottom', // Labels am unteren Rand ausrichten
               ...(column.key === 'quantity' && { width: '80px', maxWidth: '80px' }),
               ...(column.key === 'daysUntilExpired' && { width: '85px', maxWidth: '85px' }),
             }}
@@ -163,6 +240,10 @@ const Pantry = () => {
   const [orderBy, setOrderBy] = React.useState('name');
   const [order, setOrder] = React.useState('asc');
   const [filters, setFilters] = React.useState({});
+  
+  // Lagerort-Filter (alle Lagerorte sind standardmäßig ausgewählt)
+  const allLocations = Object.values(DEFAULT_STORAGE_LOCATIONS);
+  const [selectedLocations, setSelectedLocations] = React.useState(allLocations);
 
   const handleMenuListClick = (event) => {
     setMenuListAnchorEl(event.currentTarget);
@@ -275,7 +356,14 @@ const Pantry = () => {
   // Gefilterte und sortierte Items (React Compiler optimiert automatisch)
   let visibleRows = [...items];
   
-  // Filtern
+  // Nach Lagerort filtern
+  if (selectedLocations.length > 0 && selectedLocations.length < allLocations.length) {
+    visibleRows = visibleRows.filter((item) =>
+      selectedLocations.includes(item.location)
+    );
+  }
+  
+  // Nach Spalten filtern
   Object.keys(filters).forEach((key) => {
     const filterValue = filters[key];
     if (filterValue) {
@@ -311,7 +399,39 @@ const Pantry = () => {
           flexShrink: 0, // Header soll nicht schrumpfen
         }}
       >
-        <Typography variant="h4">Vorratskammer</Typography>
+        <FormControl sx={{ minWidth: 250 }} size="small">
+          <Select
+            multiple
+            displayEmpty
+            value={selectedLocations}
+            onChange={(e) => setSelectedLocations(e.target.value)}
+            input={<OutlinedInput />}
+            renderValue={(selected) => {
+              if (selected.length === 0) {
+                return "Angezeigte Lagerorte: Keine";
+              }
+              if (selected.length === allLocations.length) {
+                return "Angezeigte Lagerorte: Alle";
+              }
+              if (selected.length === 1) {
+                return `Angezeigte Lagerorte: ${selected[0]}`;
+              }
+              return "Angezeigte Lagerorte: Mehrere";
+            }}
+            sx={{
+              '& .MuiSelect-select': {
+                py: 1,
+              }
+            }}
+          >
+            {allLocations.map((location) => (
+              <MenuItem key={location} value={location}>
+                <Checkbox checked={selectedLocations.indexOf(location) > -1} />
+                <Typography>{location}</Typography>
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
         <IconButton
           id="MenuListButton"
           onClick={handleMenuListClick}
@@ -373,7 +493,11 @@ const Pantry = () => {
             overflowX: 'hidden',
           }}
         >
-          <Table stickyHeader sx={{ width: '100%', tableLayout: 'fixed' }}>
+          <Table 
+            stickyHeader 
+            size="small" 
+            sx={{ width: '100%', tableLayout: 'fixed' }}
+          >
             <EnhancedTableHead
               numSelected={selectedRows.length}
               order={order}
@@ -387,37 +511,13 @@ const Pantry = () => {
             />
             <TableBody>
               {visibleRows.map((item) => (
-                <TableRow
+                <Row
                   key={item.id}
-                  hover
-                  selected={selectedRows.includes(item.id)}
-                  sx={{
-                    cursor: checkboxSelectionEnabled ? 'pointer' : 'default',
-                  }}
-                  onClick={() =>
-                    checkboxSelectionEnabled && handleSelectRow(item.id)
-                  }
-                >
-                  {checkboxSelectionEnabled && (
-                    <TableCell padding="checkbox">
-                      <Checkbox checked={selectedRows.includes(item.id)} />
-                    </TableCell>
-                  )}
-                  {TABLE_COLUMNS.map((column) => (
-                    <TableCell
-                      key={column.key}
-                      sx={{
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        // Bedingte Breiten für bestimmte Spalten
-                        ...(column.key === 'quantity' && { width: '60px', maxWidth: '80px' }),
-                        ...(column.key === 'daysUntilExpired' && { width: '85px', maxWidth: '85px' }),
-                      }}
-                    >
-                      {item[column.key]}
-                    </TableCell>
-                  ))}
-                </TableRow>
+                  item={item}
+                  checkboxSelectionEnabled={checkboxSelectionEnabled}
+                  isSelected={selectedRows.includes(item.id)}
+                  onSelectRow={handleSelectRow}
+                />
               ))}
             </TableBody>
           </Table>
