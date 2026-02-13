@@ -33,7 +33,6 @@ import {
   Settings,
   FileDownload as ExportIcon,
 } from '@mui/icons-material';
-import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
 import ClearIcon from '@mui/icons-material/Clear';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import EditIcon from '@mui/icons-material/Edit';
@@ -41,7 +40,6 @@ import CheckBoxIcon from '@mui/icons-material/CheckBox';
 import { visuallyHidden } from '@mui/utils';
 
 import { ITEM_SCHEMA } from '../../models/itemSchema';
-import { useAppBar } from '../../Providers/AppBarProvider';
 import { StyledMenu } from '../../Components/StyledMenu';
 
 import { insertTestData } from '../../../../scripts/insertTestData';
@@ -145,8 +143,6 @@ function EnhancedTableHead(props) {
 }
 
 const Pantry = () => {
-  const { setConfig } = useAppBar();
-
   const [items, setItems] = useState([]);
   const [newName, setNewName] = useState('');
   const [newType, setNewType] = useState('');
@@ -188,14 +184,7 @@ const Pantry = () => {
     setOpen(false);
   };
 
-  useEffect(() => {
-    setConfig({
-      showBackButton: true,
-      backPath: '/',
-      icon: <ArrowBackIosIcon />,
-      title: 'NoVo-Tracker',
-    });
-  }, [setConfig]);
+  // AppBar config wird jetzt von AppLayout basierend auf Route gesetzt
 
   // TODO: Remove this after testing - inserts test data
   useEffect(() => {

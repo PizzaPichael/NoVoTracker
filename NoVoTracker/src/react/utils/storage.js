@@ -107,7 +107,7 @@ export const addDBItem = async (item) => {
     ];
     
     const result = await db.run(query, values);
-    console.log('Item inserted:', result);
+    // console.log('Item inserted:', result);
     return result;
 };
 
@@ -126,7 +126,7 @@ export const updateDBItem = async (id, updates) => {
     
     const setClause = columns.map(col => `${col} = ?`).join(', ');
     const query = `UPDATE items SET ${setClause} WHERE id = ?`;
-    
+
     if (updates.expiry) {
         updates.daysUntilExpired = calculateDaysUntilExpired(updates.expiry);
     }

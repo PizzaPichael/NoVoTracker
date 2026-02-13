@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -11,14 +11,33 @@ import {
 import { Home as HomeIcon } from '@mui/icons-material';
 import KitchenIcon from '@mui/icons-material/Kitchen';
 import EmergencyIcon from '@mui/icons-material/Emergency';
+import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
 import AppRoutes from './AppRoutes';
 import CustomAppBar from './Components/CustomAppBar';
+import { useAppBar } from './Providers/AppBarProvider';
 
 const BOTTOM_NAV_HEIGHT = 60; // Höhe des Bottom Menus in px
 
 const AppLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { setConfig } = useAppBar();
+
+  // Dynamisches Label basierend auf Route
+  useEffect(() => {
+    let title = 'NoVoTracker';
+    
+    if (location.pathname.startsWith('/pantry')) title = 'Vorräte';
+    if (location.pathname.startsWith('/home')) title = 'Home';
+    if (location.pathname.startsWith('/emergency')) title = 'Notfall-Liste';
+
+    setConfig({
+      showBackButton: true,
+      backPath: '/',
+      icon: <ArrowBackIosIcon />,
+      title,
+    });
+  }, [location.pathname, setConfig]);
 
   let navigationIndex = 0;
   if (location.pathname.startsWith('/pantry')) navigationIndex = 0;
