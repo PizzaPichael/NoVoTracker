@@ -46,6 +46,7 @@ import { visuallyHidden } from '@mui/utils';
 
 import { ITEM_SCHEMA, DEFAULT_STORAGE_LOCATIONS, DEFAULT_QUANTITY_UNITS } from '../../models/itemSchema';
 import { StyledMenu } from '../../Components/StyledMenu';
+import { getStorageLocations } from '../../utils/settingsUtils';
 
 import { insertTestData } from '../../../../scripts/insertTestData';
 
@@ -247,7 +248,7 @@ const Pantry = () => {
   const [filters, setFilters] = React.useState({});
   
   // Lagerort-Filter (alle Lagerorte sind standardmäßig ausgewählt)
-  const allLocations = Object.values(DEFAULT_STORAGE_LOCATIONS);
+  const allLocations = getStorageLocations();
   const [selectedLocations, setSelectedLocations] = React.useState(allLocations);
 
   const handleMenuListClick = (event) => {
@@ -617,7 +618,7 @@ const Pantry = () => {
                   onChange={(e) => setNewLocation(e.target.value)}
                   label="Lagerort"
                 >
-                  {Object.values(DEFAULT_STORAGE_LOCATIONS).map((location) => (
+                  {getStorageLocations().map((location) => (
                     <MenuItem key={location} value={location}>
                       {location}
                     </MenuItem>

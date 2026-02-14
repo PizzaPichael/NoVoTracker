@@ -31,6 +31,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import AddIcon from '@mui/icons-material/Add';
 import { loadDBItems, updateDBItem, addDBItem } from '../../utils/storage';
 import { DEFAULT_QUANTITY_UNITS, DEFAULT_STORAGE_LOCATIONS } from '../../models/itemSchema';
+import { getDefaultPersons, getStorageLocations } from '../../utils/settingsUtils';
 
 // Notvorrat-Daten basierend auf offizieller Vorratstabelle (für 1 Tag, 1 Person)
 // dietType: 'both' = beide Ernährungsformen, 'mixed' = nur Mischkost, 'vegetarian' = nur vegetarisch
@@ -99,7 +100,7 @@ const EMERGENCY_SUPPLIES = [
 ];
 
 const EmergencyList = () => {
-  const [persons, setPersons] = useState(1);
+  const [persons, setPersons] = useState(getDefaultPersons());
   const [days, setDays] = useState(1);
   const [dietType, setDietType] = useState('mixed'); // 'mixed' oder 'vegetarian'
   const [inventory, setInventory] = useState([]);
@@ -511,7 +512,7 @@ const EmergencyList = () => {
                 onChange={(e) => setEditItem({ ...editItem, location: e.target.value })}
                 label="Lagerort"
               >
-                {Object.values(DEFAULT_STORAGE_LOCATIONS).map((loc) => (
+                {getStorageLocations().map((loc) => (
                   <MenuItem key={loc} value={loc}>{loc}</MenuItem>
                 ))}
               </Select>
@@ -582,7 +583,7 @@ const EmergencyList = () => {
                 onChange={(e) => setNewItem({ ...newItem, location: e.target.value })}
                 label="Lagerort"
               >
-                {Object.values(DEFAULT_STORAGE_LOCATIONS).map((loc) => (
+                {getStorageLocations().map((loc) => (
                   <MenuItem key={loc} value={loc}>{loc}</MenuItem>
                 ))}
               </Select>

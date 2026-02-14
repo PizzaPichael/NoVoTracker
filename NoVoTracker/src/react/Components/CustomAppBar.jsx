@@ -2,6 +2,7 @@ import React from 'react'
 import { useTheme } from '@emotion/react'
 
 import { AppBar, Typography, IconButton, Toolbar } from '@mui/material'
+import SettingsIcon from '@mui/icons-material/Settings'
 
 import { useNavigate } from 'react-router-dom'
 
@@ -41,6 +42,14 @@ const CustomAppBar = () => {
         >
           {config.title}
         </Typography>
+        <IconButton
+          onClick={() => navigate('/settings')}
+          edge="end"
+          color="inherit"
+          aria-label="settings"
+        >
+          <SettingsIcon />
+        </IconButton>
       </Toolbar>
     </AppBar>
   )
