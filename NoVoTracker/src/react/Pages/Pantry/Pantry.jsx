@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { loadDBItems, addDBItem } from '../../utils/storage';
+import { loadDBItems } from '../../utils/storage';
 import {
   Button,
   TextField,
@@ -37,11 +37,11 @@ import {
   Save as SaveIcon,
   Settings,
   FileDownload as ExportIcon,
+  Clear as ClearIcon,
+  MoreVert as MoreVertIcon,
+  Edit as EditIcon,
+  CheckBox as CheckBoxIcon,
 } from '@mui/icons-material';
-import ClearIcon from '@mui/icons-material/Clear';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
-import EditIcon from '@mui/icons-material/Edit';
-import CheckBoxIcon from '@mui/icons-material/CheckBox';
 import { visuallyHidden } from '@mui/utils';
 
 import { ITEM_SCHEMA, DEFAULT_STORAGE_LOCATIONS, DEFAULT_QUANTITY_UNITS } from '../../models/itemSchema';
@@ -49,6 +49,7 @@ import { StyledMenu } from '../../Components/StyledMenu';
 import { getStorageLocations } from '../../utils/settingsUtils';
 
 import { insertTestData } from '../../../../scripts/insertTestData';
+import CreateItemDialog from '../../Components/CreateItemDialog';
 
 const keysToExcludeFromTable = ['created', 'id', 'qunatity', 'type', 'expiry', 'quantityUnit'];
 const TABLE_COLUMNS = ITEM_SCHEMA.filter(
@@ -82,7 +83,9 @@ function Row(props) {
     item, 
     checkboxSelectionEnabled, 
     isSelected, 
-    onSelectRow 
+    onSelectRow,
+    onEdit,
+    onDelete, 
   } = props;
   const [open, setOpen] = React.useState(false);
 
@@ -132,7 +135,7 @@ function Row(props) {
       <TableRow>
         <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={checkboxSelectionEnabled ? TABLE_COLUMNS.length + 1 : TABLE_COLUMNS.length}>
           <Collapse in={open} timeout="auto" unmountOnExit>
-            <Box sx={{ margin: 2 }}>
+            <Box sx={{ margin: 2, display: 'flex', gap: 2  }}>
               <Box sx={{ display: 'grid', gridTemplateColumns: '150px 1fr', gap: 1 }}>
                 <Typography variant="body2" sx={{ fontWeight: 'bold' }}>Typ:</Typography>
                 <Typography variant="body2">{item.type || '-'}</Typography>
@@ -142,6 +145,21 @@ function Row(props) {
                 
                 <Typography variant="body2" sx={{ fontWeight: 'bold' }}>Erstellt am:</Typography>
                 <Typography variant="body2">{item.created || '-'}</Typography>
+              </Box>
+              <Box>
+                <IconButton
+                  id="EditEntryButton"
+                  onClick={() => onEdit(item)}
+                >
+                
+                  <EditIcon />
+                </IconButton>
+                <IconButton
+                  id="DeleteEntryButton"
+                  onClick={() => onDelete(item.id)}
+                >
+                  <DeleteIcon />
+                </IconButton>
               </Box>
             </Box>
           </Collapse>
@@ -226,12 +244,6 @@ function EnhancedTableHead(props) {
 
 const Pantry = () => {
   const [items, setItems] = useState([]);
-  const [newName, setNewName] = useState('');
-  const [newType, setNewType] = useState('');
-  const [newQuantity, setNewQuantity] = useState('');
-  const [newQuantityUnit, setNewQuantityUnit] = useState('');
-  const [newExpiry, setNewExpiry] = useState('');
-  const [newLocation, setNewLocation] = useState('');
 
   const [openCreateDialogue, setOpen] = React.useState(false);
 
@@ -263,11 +275,21 @@ const Pantry = () => {
     handleMenuListClose();
   };
 
-  const handleCreateDialogueClick = () => {
+  const [dialogueMode, setDialogueMode] = React.useState("");
+  const [editingItem, setEditingItem] = React.useState(null);
+
+  const handleCreateCustomizeDialogueClick = (mode, item) => {
+    setDialogueMode(mode);
+    if(mode === "update" && item) {
+      setEditingItem(item);
+    }
     setOpen(true);
   };
 
-  const handleCreateDialogueClose = () => {
+  const handleCreateCustomizeDialogueClose = () => {
+    setDialogueMode("");
+    setEditingItem(null);
+    
     setOpen(false);
   };
 
@@ -291,30 +313,6 @@ const Pantry = () => {
     };
     fetchData();
   }, []);
-
-
-  const handleAdd = async () => {
-    if (!newName || !newType || !newQuantity || !newExpiry || !newLocation)
-      return;
-
-    await addDBItem({
-      name: newName,
-      type: newType,
-      quantity: newQuantity,
-      quantityUnit: newQuantityUnit,
-      expiry: newExpiry,
-      location: newLocation,
-    });
-
-    setNewName('');
-    setNewType('');
-    setNewQuantity('');
-    setNewQuantityUnit('');
-    setNewExpiry('');
-    setNewLocation('');
-
-    await loadData();
-  };
 
   // TODO
   // eslint-disable-next-line no-unused-vars
@@ -525,6 +523,8 @@ const Pantry = () => {
                   checkboxSelectionEnabled={checkboxSelectionEnabled}
                   isSelected={selectedRows.includes(item.id)}
                   onSelectRow={handleSelectRow}
+                  onEdit={() => handleCreateCustomizeDialogueClick("update", item)}
+                  onDelete={() => handleDelete(item.id)}
                 />
               ))}
             </TableBody>
@@ -542,101 +542,17 @@ const Pantry = () => {
           pb: 0,
         }}
       >
-        <Button variant="outlined" onClick={handleCreateDialogueClick}>
+        <Button variant="outlined" onClick={() => handleCreateCustomizeDialogueClick("create")}>
           Eintrag hinzufügen
         </Button>
-        <Dialog open={openCreateDialogue} onClose={handleCreateDialogueClose}>
-          <DialogTitle
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}
-          >
-            <span>Eintrag hinzufügen</span>
-            <IconButton onClick={handleCreateDialogueClose}>
-              <ClearIcon />
-            </IconButton>
-          </DialogTitle>
-          <DialogContent>
-            <DialogContentText>
-              Bitte fülle <strong>alle</strong> unten stehenden Felder aus um
-              einen neuen Eintrag zu erstellen. Die Erstellung erfolgt sonst nicht.
-            </DialogContentText>
-            <Box sx={{ mb: 1 }}>
-              <TextField
-                label="Name"
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-                fullWidth
-                sx={{ mb: 1 }}
-              />
-              <TextField
-                label="Typ"
-                value={newType}
-                onChange={(e) => setNewType(e.target.value)}
-                fullWidth
-                sx={{ mb: 1 }}
-              />
-              <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
-                <TextField
-                  label="Menge"
-                  value={newQuantity}
-                  onChange={(e) => setNewQuantity(e.target.value)}
-                  sx={{ flex: 3 }}
-                />
-                <FormControl sx={{ flex: 1 }}>
-                  <InputLabel id="quantity-unit-select-label">Einheit</InputLabel>
-                  <Select
-                    labelId="quantity-unit-select-label"
-                    value={newQuantityUnit}
-                    onChange={(e) => setNewQuantityUnit(e.target.value)}
-                    label="Einheit"
-                  >
-                    {Object.values(DEFAULT_QUANTITY_UNITS).map((unit) => (
-                      <MenuItem key={unit} value={unit}>
-                        {unit}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Box>
-              <TextField
-                label="MHD"
-                type="date"
-                value={newExpiry}
-                onChange={(e) => setNewExpiry(e.target.value)}
-                fullWidth
-                InputLabelProps={{ shrink: true }}
-                sx={{ mb: 1 }}
-              />
-              <FormControl fullWidth sx={{ mb: 2 }}>
-                <InputLabel id="lagerort-select-label">Lagerort</InputLabel>
-                <Select
-                  labelId="lagerort-select-label"
-                  value={newLocation}
-                  onChange={(e) => setNewLocation(e.target.value)}
-                  label="Lagerort"
-                >
-                  {getStorageLocations().map((location) => (
-                    <MenuItem key={location} value={location}>
-                      {location}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-                <Button
-                  variant="contained"
-                  onClick={handleAdd}
-                  startIcon={<SaveIcon />}
-                >
-                  Hinzufügen
-                </Button>
-              </Box>
-            </Box>
-          </DialogContent>
-        </Dialog>
+        <CreateItemDialog
+          key={dialogueMode === 'update' ? editingItem?.id : 'create'}
+          open={openCreateDialogue}
+          onClose={handleCreateCustomizeDialogueClose}
+          onItemAdded={loadData}
+          mode={dialogueMode}
+          item={editingItem}
+        />
       </Box>
     </Box>
   );

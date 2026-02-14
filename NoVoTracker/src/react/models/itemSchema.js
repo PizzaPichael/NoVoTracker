@@ -74,6 +74,13 @@ export const ITEM_SCHEMA = [
         allowCustom: false
     },
     {
+        key: 'amountToAlert',
+        label: 'Menge, ab der ein niedriger Bestand gemeldet werden soll',
+        dbType: 'INTEGER',
+        uiType: 'number',
+        required: false
+    },
+    {
         key: 'expiry',
         label: 'MHD',
         dbType: 'TEXT',

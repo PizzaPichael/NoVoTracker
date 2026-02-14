@@ -203,7 +203,7 @@ const Home = () => {
             >
               <TableHead>
                 <TableRow>
-                  {TABLE_COLUMNS.map((column) => (
+                  {TABLE_COLUMNS.map((column) => ( 
                     <TableCell
                       key={column.key}
                       sx={{
@@ -219,7 +219,9 @@ const Home = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {itemsByQuantity.map((item) => (
+                {itemsByQuantity
+                .filter((item) => item.quantity <= item.amountToAlert)
+                .map((item) => (
                   <Row key={`qty-${item.id}`} item={item} />
                 ))}
               </TableBody>
