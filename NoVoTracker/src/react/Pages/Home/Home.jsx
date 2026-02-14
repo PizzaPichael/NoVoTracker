@@ -19,7 +19,7 @@ import { loadDBItems } from '../../utils/storage'
 import { ITEM_SCHEMA } from '../../models/itemSchema'
 
 // Table configuration - same as Pantry
-const keysToExcludeFromTable = ['created', 'id', 'qunatity', 'type', 'expiry', 'quantityUnit'];
+const keysToExcludeFromTable = ['created', 'id', 'type', 'expiry', 'quantityUnit', 'amountToAlert'];
 const TABLE_COLUMNS = ITEM_SCHEMA.filter(
   (col) => !keysToExcludeFromTable.includes(col.key),
 );

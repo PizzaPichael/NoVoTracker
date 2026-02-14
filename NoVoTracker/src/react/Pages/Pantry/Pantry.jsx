@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { loadDBItems } from '../../utils/storage';
+import { loadDBItems, addDBItem, updateDBItem } from '../../utils/storage';
 import {
   Button,
   TextField,
@@ -51,7 +51,7 @@ import { getStorageLocations } from '../../utils/settingsUtils';
 import { insertTestData } from '../../../../scripts/insertTestData';
 import CreateItemDialog from '../../Components/CreateItemDialog';
 
-const keysToExcludeFromTable = ['created', 'id', 'qunatity', 'type', 'expiry', 'quantityUnit'];
+const keysToExcludeFromTable = ['created', 'id', 'qunatity', 'type', 'expiry', 'quantityUnit', 'amountToAlert'];
 const TABLE_COLUMNS = ITEM_SCHEMA.filter(
   (col) => !keysToExcludeFromTable.includes(col.key),
 );
@@ -291,6 +291,15 @@ const Pantry = () => {
     setEditingItem(null);
     
     setOpen(false);
+  };
+
+  const handleSaveItem = async (itemData) => {
+    if (dialogueMode === 'update' && editingItem) {
+      await updateDBItem(editingItem.id, itemData);
+    } else {
+      await addDBItem(itemData);
+    }
+    await loadData();
   };
 
   // AppBar config wird jetzt von AppLayout basierend auf Route gesetzt
@@ -548,6 +557,7 @@ const Pantry = () => {
         <CreateItemDialog
           key={dialogueMode === 'update' ? editingItem?.id : 'create'}
           open={openCreateDialogue}
+          onSave={handleSaveItem}
           onClose={handleCreateCustomizeDialogueClose}
           onItemAdded={loadData}
           mode={dialogueMode}
