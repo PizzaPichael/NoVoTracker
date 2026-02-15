@@ -7,6 +7,8 @@ import {
   Select,
   MenuItem,
   FormControl,
+  FormControlLabel,
+  Checkbox,
   InputLabel,
 } from '@mui/material';
 import Dialog from '@mui/material/Dialog';
@@ -48,11 +50,21 @@ const CreateItemDialog = ({ open, onClose, onSave, mode, item }) => {
 
   const [formData, setFormData] = useState(initialValues);
   const [submitted, setSubmitted] = useState(false);
+  const [addAnother, setAddAnother] = useState(false);
 
   // Key-Prop auf dem Dialog sorgt für Reset – kein useEffect nötig
 
   const updateField = (field) => (e) => {
     setFormData((prev) => ({ ...prev, [field]: e.target.value }));
+  };
+
+  const handleToggleAddAnother = (e) => {
+    setAddAnother(e.target.checked);
+  };
+
+  const handleClose = () => {
+    setAddAnother(false);
+    onClose();
   };
 
   const handleSave = () => {
@@ -69,12 +81,17 @@ const CreateItemDialog = ({ open, onClose, onSave, mode, item }) => {
       location: formData.location,
     });
 
-    if (mode === 'create') setFormData(EMPTY_FORM);
-    onClose();
+    setFormData(EMPTY_FORM);
+    setSubmitted(false);
+
+    if (!(mode === 'create' && addAnother)) {
+      setAddAnother(false);
+      onClose();
+    }
   };
 
   return (
-    <Dialog open={open} onClose={onClose}>
+    <Dialog open={open} onClose={handleClose}>
       <DialogTitle
         sx={{
           display: 'flex',
@@ -83,7 +100,7 @@ const CreateItemDialog = ({ open, onClose, onSave, mode, item }) => {
         }}
       >
         <span>Eintrag {mode === 'create' ? 'hinzufügen' : 'bearbeiten'}</span>
-        <IconButton onClick={onClose}>
+        <IconButton onClick={handleClose}>
           <ClearIcon />
         </IconButton>
       </DialogTitle>
@@ -171,24 +188,27 @@ const CreateItemDialog = ({ open, onClose, onSave, mode, item }) => {
               ))}
             </Select>
           </FormControl>
+          {mode === 'create' && (
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={addAnother}
+                  onChange={handleToggleAddAnother}
+                  size="small"
+                />
+              }
+              label="Nach dem Hinzufügen weiteren Eintrag erstellen"
+              sx={{ mb: 1 }}
+            />
+          )}
           <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-            {mode === 'create' ? (
-                <Button
-                variant="contained"
-                onClick={handleSave}
-                startIcon={<SaveIcon />}
-                >
-                Hinzufügen
-                </Button>
-            ) : (
-                <Button
-                variant="contained"
-                onClick={handleSave}
-                startIcon={<SaveIcon />}
-                >
-                Speichern
-                </Button>
-            )}
+            <Button
+              variant="contained"
+              onClick={handleSave}
+              startIcon={<SaveIcon />}
+            >
+              {mode === 'create' ? 'Hinzufügen' : 'Speichern'}
+            </Button>
           </Box>
         </Box>
       </DialogContent>
